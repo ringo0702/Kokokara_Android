@@ -48,21 +48,12 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
     fun fetchCurrentLocation() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(
-                isLoadingLocation = true,
-                locationError = null
+                isLoadingLocation = false,
+                locationError = null,
+                currentLocation = LatLng(34.7024, 135.4959) // 開発用ダミー（大阪梅田）
             )
-            try {
-                val location = locationManager.getCurrentLocation()
-                _uiState.value = _uiState.value.copy(
-                    currentLocation = location,
-                    isLoadingLocation = false
-                )
-            } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    isLoadingLocation = false,
-                    locationError = "現在地を取得できませんでした"
-                )
-            }
         }
     }
+
 }
+

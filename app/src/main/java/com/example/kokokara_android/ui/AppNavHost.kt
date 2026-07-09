@@ -7,6 +7,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.kokokara_android.ui.search.SearchScreen
+import com.example.kokokara_android.ui.result.ResultListScreen
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.kokokara_android.ui.result.ResultListViewModel
+import com.example.kokokara_android.ui.detail.ShopDetailScreen
+
 
 // ルート定数
 object Routes {
@@ -19,12 +24,13 @@ object Routes {
 @Composable
 fun AppNavHost() {
     val navController = rememberNavController()
+    // ViewModelをNavHost全体で共有
+    val resultListViewModel: ResultListViewModel = viewModel()
 
     NavHost(
         navController = navController,
         startDestination = Routes.SEARCH
     ) {
-        // 検索条件入力画面
         composable(Routes.SEARCH) {
             SearchScreen(
                 onSearchClick = { radius, genres ->
@@ -34,7 +40,6 @@ fun AppNavHost() {
             )
         }
 
-        // 検索結果リスト画面（ダミー）
         composable(
             route = Routes.RESULT_LIST,
             arguments = listOf(
@@ -43,21 +48,24 @@ fun AppNavHost() {
             )
         ) { backStackEntry ->
             val radius = backStackEntry.arguments?.getInt("radius") ?: 1000
-            val genres = backStackEntry.arguments?.getString("genres") ?: ""
-            ResultListScreenDummy(
+            val genresStr = backStackEntry.arguments?.getString("genres") ?: ""
+            val genres = if (genresStr == "none") emptyList() else genresStr.split(",")
+            ResultListScreen(
+                lat = 34.7024,
+                lng = 135.4959,
                 radius = radius,
-                genres = genres,
+                genreCodes = genres,
+                onBackClick = { navController.popBackStack() },
                 onMapClick = {
-                    navController.navigate("result_map/$radius/$genres")
+                    navController.navigate("result_map/$radius/$genresStr")
                 },
                 onShopClick = { shopId ->
                     navController.navigate("shop_detail/$shopId")
                 },
-                onBackClick = { navController.popBackStack() }
+                viewModel = resultListViewModel
             )
         }
 
-        // 検索結果マップ画面（ダミー）
         composable(
             route = Routes.RESULT_MAP,
             arguments = listOf(
@@ -74,7 +82,6 @@ fun AppNavHost() {
             )
         }
 
-        // 店舗詳細画面（ダミー）
         composable(
             route = Routes.SHOP_DETAIL,
             arguments = listOf(
@@ -82,10 +89,13 @@ fun AppNavHost() {
             )
         ) { backStackEntry ->
             val shopId = backStackEntry.arguments?.getString("shopId") ?: ""
-            ShopDetailScreenDummy(
-                shopId = shopId,
-                onBackClick = { navController.popBackStack() }
-            )
+            val shop = resultListViewModel.getShopById(shopId)
+            if (shop != null) {
+                ShopDetailScreen(
+                    shop = shop,
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
         }
     }
 }

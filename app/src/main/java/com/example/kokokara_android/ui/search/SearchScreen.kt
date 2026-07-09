@@ -25,6 +25,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.kokokara_android.data.model.Genre
+import android.content.pm.PackageManager
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 
 private val OrangeColor = Color(0xFFE8621A)
 
@@ -36,8 +39,8 @@ fun SearchScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showRadiusPicker by remember { mutableStateOf(false) }
+    val context = LocalContext.current  // ← 追加
 
-    // 権限リクエストランチャー
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
@@ -48,14 +51,9 @@ fun SearchScreen(
         }
     }
 
-    // 画面表示時に位置情報を取得
+    // 権限チェックを省いて直接呼ぶ（開発用）
     LaunchedEffect(Unit) {
-        permissionLauncher.launch(
-            arrayOf(
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            )
-        )
+        viewModel.fetchCurrentLocation()
     }
 
     Scaffold(
